@@ -1,0 +1,92 @@
+{
+  "storyboard": {
+    "schema_version": "v0",
+    "project_id": "demo-yunzhangfang",
+    "brand": {
+      "name": "云账房",
+      "byline": "小微企业记账",
+      "url": "yunzhangfang.com"
+    },
+    "music": true,
+    "scenes": [
+      {
+        "id": "scene_hook",
+        "voiceover": "月底了，发票和流水还在手工对账？",
+        "visual": {
+          "template": "hook",
+          "params": {
+            "line1": "月底对账，",
+            "line2_pre": "又要加班到",
+            "line2_hi": " 半夜",
+            "line2_post": "？",
+            "chips": ["收发票", "录流水", "对科目", "出报表"]
+          }
+        }
+      },
+      {
+        "id": "scene_options",
+        "voiceover": "拍张发票，连上银行，或者导入表格，都能开始记账。",
+        "visual": {
+          "template": "options",
+          "params": {
+            "headline": "拍照、连行、导表，都能开始",
+            "options": [
+              {"icon": "image", "title": "拍发票", "sub": "自动识别金额与科目"},
+              {"icon": "bank", "title": "连银行", "sub": "流水自动同步入账"},
+              {"icon": "doc", "title": "导表格", "sub": "Excel 一键导入"}
+            ]
+          }
+        }
+      },
+      {
+        "id": "scene_features",
+        "voiceover": "AI 自动分类每一笔收支，张张凭证都有据可查。",
+        "visual": {
+          "template": "features",
+          "params": {
+            "headline": "AI 自动分类，张张有据",
+            "subhead": "每笔分录都能追溯到原始凭证",
+            "browser_url": "yunzhangfang.com",
+            "cards": [
+              {"tag": "能力 1", "text": "发票自动识别与归类", "evidence": "OCR + 科目推荐"},
+              {"tag": "能力 2", "text": "银行流水智能对账", "evidence": "自动匹配 95% 以上"},
+              {"tag": "能力 3", "text": "报表一键生成", "evidence": "利润表 / 资产负债表"}
+            ],
+            "done_chip": "本月账目已平"
+          }
+        }
+      },
+      {
+        "id": "scene_formats",
+        "voiceover": "电脑上做账，手机上看数，微信里分享给老板。",
+        "visual": {
+          "template": "formats",
+          "params": {
+            "headline": "老板随时看，会计随手做",
+            "items": [
+              {"label": "网页端 · 记账做账"},
+              {"label": "手机端 · 随时看数"},
+              {"label": "微信 · 报表分享"}
+            ]
+          }
+        }
+      },
+      {
+        "id": "scene_cta",
+        "voiceover": "云账房，让账目自己清楚。",
+        "visual": {
+          "template": "cta",
+          "params": {
+            "title": "云账房",
+            "slogan": "让账目自己清楚",
+            "byline": "小微企业的 AI 记账",
+            "url": "yunzhangfang.com"
+          }
+        }
+      }
+    ]
+  },
+  "aspects": ["16:9", "9:16"],
+  "voice": "zh-CN-XiaoxiaoNeural",
+  "tts_provider": "edge"
+}
