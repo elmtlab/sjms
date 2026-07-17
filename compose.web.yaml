@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: ./web
+    ports:
+      - "3000:3000"
+    environment:
+      MEDIA_API_URL: http://host.docker.internal:8787
+      SJMS_DATA_DIR: /app/data
+      VISION_PROVIDER: mock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - sjms-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sjms-data:
+

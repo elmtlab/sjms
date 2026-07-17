@@ -16,6 +16,18 @@ The server-side `/api/media/*` proxy connects to the media service at
 `MEDIA_API_URL`. When the service is offline, upload analysis and rendering use a
 deterministic demo fallback so the complete product flow remains reviewable.
 
+Projects and uploaded files persist under `SJMS_DATA_DIR` (default `./data`). The
+current `VISION_PROVIDER=mock` creates contract-valid ProductUnderstanding data;
+Bob's vision worker will replace that adapter without changing the Web flow.
+
+## Run with Docker
+
+From the repository root:
+
+```bash
+docker compose -f compose.web.yaml up --build
+```
+
 ## Available flow
 
 1. Add screenshots, a URL, or a screen recording.
@@ -30,4 +42,3 @@ deterministic demo fallback so the complete product flow remains reviewable.
 npm run lint
 npm run build
 ```
-

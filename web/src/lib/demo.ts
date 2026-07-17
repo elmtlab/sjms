@@ -6,6 +6,7 @@ export type ProjectSource = {
   name: string;
   meta: string;
   preview?: string;
+  file?: File;
 };
 
 export type ProductBrief = {
@@ -110,4 +111,3 @@ export const initialScenes: StoryScene[] = [
     duration: "3.1 秒",
   },
 ];
-

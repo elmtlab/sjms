@@ -166,7 +166,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function SourcePanel({ mode, setMode, sources, setSources, onAnalyze, analyzeState, progress }: {
+function SourcePanel({ mode, setMode, sources, setSources, onAnalyze, analyzeState, progress, error }: {
   mode: SourceKind;
   setMode: (mode: SourceKind) => void;
   sources: ProjectSource[];
@@ -174,6 +174,7 @@ function SourcePanel({ mode, setMode, sources, setSources, onAnalyze, analyzeSta
   onAnalyze: () => void;
   analyzeState: AnalyzeState;
   progress: number;
+  error: string | null;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState("https://s-j.ai");
@@ -186,6 +187,7 @@ function SourcePanel({ mode, setMode, sources, setSources, onAnalyze, analyzeSta
       name: file.name,
       meta: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
       preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+      file,
     }));
     setSources((current) => [...current, ...next]);
   };
@@ -270,6 +272,7 @@ function SourcePanel({ mode, setMode, sources, setSources, onAnalyze, analyzeSta
           <i><b style={{ width: `${progress}%` }} /></i>
         </div>
       )}
+      {error && <div className="inline-error" role="alert">{error}</div>}
       <div className="action-row end">
         <button type="button" className="primary-button" disabled={sources.length === 0 || analyzeState === "running"} onClick={onAnalyze}>
           {analyzeState === "running" ? <LoaderCircle size={18} className="spin" /> : <ScanSearch size={18} />}分析产品<ArrowRight size={17} />
@@ -485,6 +488,8 @@ export default function Studio() {
   const [sources, setSources] = useState<ProjectSource[]>([]);
   const [analyzeState, setAnalyzeState] = useState<AnalyzeState>("idle");
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [, setProjectId] = useState<string | null>(null);
   const [brief, setBrief] = useState(initialBrief);
   const [claims, setClaims] = useState(initialClaims);
   const [scenes, setScenes] = useState(initialScenes);
@@ -492,19 +497,74 @@ export default function Studio() {
   const [renderJobId, setRenderJobId] = useState<string | null>(null);
   const activeIndex = useMemo(() => steps.findIndex((item) => item.id === step), [step]);
 
-  const analyze = () => {
+  const analyze = async () => {
     setAnalyzeState("running");
+    setAnalysisError(null);
     setAnalysisProgress(8);
-    const timer = window.setInterval(() => {
-      setAnalysisProgress((current) => {
-        const next = Math.min(100, current + Math.ceil(Math.random() * 15));
-        if (next >= 100) {
-          window.clearInterval(timer);
-          window.setTimeout(() => { setAnalyzeState("ready"); setStep("brief"); }, 280);
-        }
-        return next;
+    const timer = window.setInterval(() => setAnalysisProgress((current) => Math.min(86, current + 7)), 180);
+    try {
+      const createResponse = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "神机妙述官网介绍", audience: brief.audience, objective: brief.objective }),
       });
-    }, 180);
+      if (!createResponse.ok) throw new Error("创建项目失败");
+      const created = await createResponse.json() as { projectId: string };
+      setProjectId(created.projectId);
+      window.localStorage.setItem("sjms.currentProject", created.projectId);
+
+      for (const source of sources) {
+        let response: Response;
+        if (source.kind === "url") {
+          response = await fetch(`/api/projects/${created.projectId}/sources`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ kind: "url", url: source.name }),
+          });
+        } else {
+          let file = source.file;
+          if (!file && source.preview) {
+            const blob = await fetch(source.preview).then((result) => result.blob());
+            file = new File([blob], source.name, { type: blob.type });
+          }
+          if (!file) throw new Error(`无法读取素材：${source.name}`);
+          const form = new FormData();
+          form.set("kind", source.kind);
+          form.set("file", file);
+          response = await fetch(`/api/projects/${created.projectId}/sources`, { method: "POST", body: form });
+        }
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({})) as { error?: string };
+          throw new Error(payload.error ?? `素材上传失败：${source.name}`);
+        }
+      }
+
+      const analysisResponse = await fetch(`/api/projects/${created.projectId}/analysis`, { method: "POST" });
+      if (!analysisResponse.ok) throw new Error("产品理解失败");
+      const understanding = await analysisResponse.json() as {
+        audience: string;
+        problem: string;
+        valueProposition: string;
+        claims: Array<{ claimId: string; text: string; evidence: Array<{ excerpt: string }> }>;
+      };
+      setBrief((current) => ({ ...current, audience: understanding.audience, problem: understanding.problem, value: understanding.valueProposition }));
+      setClaims(understanding.claims.map((claim, index) => ({
+        id: claim.claimId,
+        title: ["用户痛点", "核心价值", "交付结果"][index] ?? `产品主张 ${index + 1}`,
+        detail: claim.text,
+        evidence: claim.evidence[0]?.excerpt ?? "等待证据",
+        confirmed: true,
+        tone: (["coral", "green", "cyan"][index] ?? "green") as Claim["tone"],
+      })));
+      setAnalysisProgress(100);
+      setAnalyzeState("ready");
+      setStep("brief");
+    } catch (error) {
+      setAnalyzeState("idle");
+      setAnalysisError(error instanceof Error ? error.message : "产品分析失败");
+    } finally {
+      window.clearInterval(timer);
+    }
   };
 
   const startRender = async () => {
@@ -537,7 +597,7 @@ export default function Studio() {
         </header>
         <StepRail current={step} onChange={(next) => { const nextIndex = steps.findIndex((item) => item.id === next); if (nextIndex <= activeIndex || analyzeState === "ready") setStep(next); }} />
         <main className="main-canvas">
-          {step === "sources" && <SourcePanel mode={sourceMode} setMode={setSourceMode} sources={sources} setSources={setSources} onAnalyze={analyze} analyzeState={analyzeState} progress={analysisProgress} />}
+          {step === "sources" && <SourcePanel mode={sourceMode} setMode={setSourceMode} sources={sources} setSources={setSources} onAnalyze={analyze} analyzeState={analyzeState} progress={analysisProgress} error={analysisError} />}
           {step === "brief" && <BriefPanel brief={brief} setBrief={setBrief} claims={claims} setClaims={setClaims} onBack={() => setStep("sources")} onNext={() => setStep("story")} />}
           {step === "story" && <StoryPanel scenes={scenes} setScenes={setScenes} onBack={() => setStep("brief")} onRender={startRender} />}
           {step === "outputs" && <OutputsPanel progress={renderProgress} setProgress={setRenderProgress} onBack={() => setStep("story")} jobId={renderJobId} />}

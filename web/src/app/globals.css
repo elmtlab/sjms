@@ -230,6 +230,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .analysis-progress i, .render-status i { display: block; height: 6px; overflow: hidden; border-radius: 3px; background: #dfe5e2; }
 .analysis-progress i { grid-column: 1 / -1; }
 .analysis-progress i b, .render-status i b { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width 160ms ease; }
+.inline-error { margin-top: 14px; padding: 12px 14px; border: 1px solid #ffc9c5; border-radius: 7px; background: #fff5f4; color: #a7352f; font-size: 12px; }
 .action-row { margin-top: 28px; }
 .action-row.end { justify-content: flex-end; }
 .primary-button, .secondary-button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border-radius: 7px; font-size: 12px; font-weight: 720; }
