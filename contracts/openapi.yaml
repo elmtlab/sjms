@@ -1,0 +1,282 @@
+openapi: 3.1.0
+info:
+  title: Shenji Miaoshu MVP API
+  version: 0.1.0
+servers:
+  - url: /api/v1
+paths:
+  /projects:
+    post:
+      summary: Create a project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, audience, objective]
+              properties:
+                name: {type: string}
+                audience: {type: string}
+                objective: {type: string, enum: [feature_education, launch, conversion, onboarding]}
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Project"}
+  /projects/{projectId}/sources:
+    post:
+      summary: Register a URL or upload a source file
+      operationId: addSource
+      parameters:
+        - {$ref: "#/components/parameters/ProjectId"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [kind, url]
+                  properties:
+                    kind: {const: url}
+                    url: {type: string, format: uri}
+                - type: object
+                  required: [kind, uploadId]
+                  properties:
+                    kind: {type: string, enum: [screenshot, recording]}
+                    uploadId: {type: string}
+      responses:
+        "202":
+          description: Source accepted for normalization
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JobAccepted"}
+  /projects/{projectId}/analysis:
+    post:
+      summary: Analyze all ready project sources
+      operationId: analyzeProject
+      parameters:
+        - {$ref: "#/components/parameters/ProjectId"}
+      responses:
+        "202":
+          description: Analysis job accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JobAccepted"}
+    get:
+      summary: Get the latest product understanding
+      operationId: getProductUnderstanding
+      parameters:
+        - {$ref: "#/components/parameters/ProjectId"}
+      responses:
+        "200":
+          description: Latest understanding revision
+          content:
+            application/json:
+              schema: {$ref: "./product-understanding.schema.json"}
+  /projects/{projectId}/storyboards:
+    post:
+      summary: Generate a storyboard from a confirmed understanding revision
+      operationId: createStoryboard
+      parameters:
+        - {$ref: "#/components/parameters/ProjectId"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [understandingRevision]
+              properties:
+                understandingRevision: {type: integer, minimum: 1}
+                targetSeconds: {type: integer, minimum: 15, maximum: 120, default: 30}
+      responses:
+        "202":
+          description: Story planning job accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JobAccepted"}
+  /storyboards/{storyboardId}:
+    put:
+      summary: Save a complete new storyboard revision
+      operationId: saveStoryboardRevision
+      parameters:
+        - name: storyboardId
+          in: path
+          required: true
+          schema: {type: string}
+        - name: If-Match
+          in: header
+          required: true
+          description: Current integer revision
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "./storyboard.schema.json"}
+      responses:
+        "200":
+          description: New revision saved
+          content:
+            application/json:
+              schema: {$ref: "./storyboard.schema.json"}
+        "409": {description: Revision conflict}
+  /storyboards/{storyboardId}/voice-preview:
+    post:
+      summary: Synthesize aligned scene audio and word timestamps
+      operationId: synthesizeVoicePreview
+      parameters:
+        - name: storyboardId
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision, voiceId, rate]
+              properties:
+                revision: {type: integer, minimum: 1}
+                voiceId: {type: string}
+                rate: {type: number, minimum: 0.5, maximum: 2.0}
+      responses:
+        "202":
+          description: TTS job accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JobAccepted"}
+  /renders/quote:
+    post:
+      summary: Quote credits for one or more outputs
+      operationId: quoteRender
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RenderRequest"}
+      responses:
+        "200":
+          description: Expiring credit quote
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [quoteId, credits, expiresAt]
+                properties:
+                  quoteId: {type: string}
+                  credits: {type: integer, minimum: 0}
+                  expiresAt: {type: string, format: date-time}
+  /renders:
+    post:
+      summary: Reserve credits and render storyboard outputs
+      operationId: createRender
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - {$ref: "#/components/schemas/RenderRequest"}
+                - type: object
+                  required: [quoteId]
+                  properties:
+                    quoteId: {type: string}
+      responses:
+        "202":
+          description: Render job accepted and credits reserved
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JobAccepted"}
+  /jobs/{jobId}:
+    get:
+      summary: Get async job status
+      operationId: getJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Job state
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Job"}
+  /jobs/{jobId}/cancel:
+    post:
+      summary: Request cancellation
+      operationId: cancelJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "202": {description: Cancellation requested}
+  /events:
+    get:
+      summary: Stream project and job updates with server-sent events
+      operationId: streamEvents
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema: {type: string}
+components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: {type: string}
+  schemas:
+    Project:
+      type: object
+      required: [projectId, name, audience, objective, status, createdAt]
+      properties:
+        projectId: {type: string}
+        name: {type: string}
+        audience: {type: string}
+        objective: {type: string}
+        status: {type: string, enum: [draft, ingesting, needs_confirmation, planning, preview_ready, rendering, complete, failed]}
+        createdAt: {type: string, format: date-time}
+    JobAccepted:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId: {type: string}
+        status: {const: queued}
+    Job:
+      type: object
+      required: [jobId, kind, status, progress]
+      properties:
+        jobId: {type: string}
+        kind: {type: string, enum: [normalize_source, analyze, plan_story, synthesize_voice, render]}
+        status: {type: string, enum: [queued, running, succeeded, failed_retryable, failed_terminal, cancelling, cancelled]}
+        progress: {type: number, minimum: 0, maximum: 1}
+        errorCode: {type: [string, "null"]}
+        artifactIds: {type: array, items: {type: string}}
+    RenderRequest:
+      type: object
+      required: [storyboardId, revision, outputs]
+      properties:
+        storyboardId: {type: string}
+        revision: {type: integer, minimum: 1}
+        quality: {type: string, enum: [preview, final], default: preview}
+        outputs:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [aspect]
+            properties:
+              aspect: {type: string, enum: ["16:9", "9:16", "1:1"]}
+              resolution: {type: string, enum: [540p, 1080p], default: 1080p}
+

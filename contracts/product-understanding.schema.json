@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://s-j.ai/schemas/product-understanding.v0.json",
+  "title": "ProductUnderstandingV0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "revision", "sources", "audience", "objective", "claims", "features"],
+  "properties": {
+    "schemaVersion": {"const": "0.1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceId", "kind", "artifactIds", "status"],
+        "properties": {
+          "sourceId": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["url", "screenshot", "recording"]},
+          "originalUrl": {"type": ["string", "null"], "format": "uri"},
+          "artifactIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "status": {"enum": ["ready", "failed", "excluded"]}
+        }
+      }
+    },
+    "productName": {"type": ["string", "null"]},
+    "audience": {"type": "string", "minLength": 1},
+    "objective": {"enum": ["feature_education", "launch", "conversion", "onboarding"]},
+    "problem": {"type": ["string", "null"]},
+    "valueProposition": {"type": ["string", "null"]},
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claimId", "text", "confidence", "status", "evidence"],
+        "properties": {
+          "claimId": {"type": "string"},
+          "text": {"type": "string", "minLength": 1},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "status": {"enum": ["proposed", "confirmed", "rejected"]},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sourceId", "locator"],
+              "properties": {
+                "sourceId": {"type": "string"},
+                "artifactId": {"type": ["string", "null"]},
+                "locator": {"type": "string", "description": "DOM selector, timestamp range, crop, or page reference"},
+                "excerpt": {"type": ["string", "null"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["featureId", "name", "benefit", "claimIds"],
+        "properties": {
+          "featureId": {"type": "string"},
+          "name": {"type": "string"},
+          "benefit": {"type": "string"},
+          "claimIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logoArtifactId": {"type": ["string", "null"]},
+        "colors": {"type": "array", "items": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}, "maxItems": 5}
+      }
+    }
+  }
+}
+

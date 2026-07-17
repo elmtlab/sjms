@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://s-j.ai/schemas/storyboard.v0.json",
+  "title": "StoryboardV0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "storyboardId", "projectId", "revision", "understandingRevision", "locale", "style", "scenes"],
+  "properties": {
+    "schemaVersion": {"const": "0.1"},
+    "storyboardId": {"type": "string", "minLength": 1},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "understandingRevision": {"type": "integer", "minimum": 1},
+    "locale": {"type": "string", "default": "zh-CN"},
+    "title": {"type": ["string", "null"]},
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packId"],
+      "properties": {
+        "packId": {"type": "string"},
+        "logoArtifactId": {"type": ["string", "null"]},
+        "primaryColor": {"type": ["string", "null"], "pattern": "^#[0-9A-Fa-f]{6}$"}
+      }
+    },
+    "voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "voiceId", "rate"],
+      "properties": {
+        "provider": {"type": "string"},
+        "voiceId": {"type": "string"},
+        "rate": {"type": "number", "minimum": 0.5, "maximum": 2.0}
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sceneId", "order", "purpose", "narration", "durationMs", "visual", "claimIds", "assetIds"],
+        "properties": {
+          "sceneId": {"type": "string"},
+          "order": {"type": "integer", "minimum": 0},
+          "purpose": {"enum": ["hook", "problem", "value", "feature", "proof", "workflow", "outcome", "cta"]},
+          "narration": {"type": "string", "minLength": 1},
+          "durationMs": {"type": ["integer", "null"], "minimum": 1},
+          "visual": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["template", "params"],
+            "properties": {
+              "template": {"type": "string", "minLength": 1},
+              "params": {"type": "object"}
+            }
+          },
+          "claimIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "assetIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "ttsArtifactId": {"type": ["string", "null"]},
+          "wordTimestampsArtifactId": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "createdAt": {"type": "string", "format": "date-time"},
+    "updatedAt": {"type": "string", "format": "date-time"}
+  }
+}
+
