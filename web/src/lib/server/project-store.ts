@@ -129,6 +129,34 @@ export async function getProject(projectId: string) {
   return toDTO(await readProjectRecord(projectId));
 }
 
+export async function getUnderstandingRequest(projectId: string) {
+  const project = await readProjectRecord(projectId);
+  const artifactPaths: Record<string, string> = {};
+  const sources = project.sources.map((source) => {
+    const artifactIds = source.storageName ? [source.sourceId] : [];
+    if (source.storageName) {
+      artifactPaths[source.sourceId] = path.join(projectDir(projectId), "sources", source.storageName);
+    }
+    return {
+      sourceId: source.sourceId,
+      kind: source.kind,
+      originalUrl: source.originalUrl,
+      artifactIds,
+      status: "ready" as const,
+    };
+  });
+  return {
+    projectId,
+    sources,
+    artifactPaths,
+    hints: {
+      productName: project.name,
+      audience: project.audience || "潜在客户",
+      objective: "feature_education" as const,
+    },
+  };
+}
+
 export async function addUrlSource(projectId: string, value: string) {
   const parsed = new URL(value);
   if (!['http:', 'https:'].includes(parsed.protocol)) throw new StoreError("Only HTTP(S) URLs are supported");
@@ -183,4 +211,3 @@ export async function saveUnderstanding(projectId: string, understanding: unknow
   await writeProjectRecord(project);
   return toDTO(project);
 }
-

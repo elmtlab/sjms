@@ -19,6 +19,10 @@ deterministic demo fallback so the complete product flow remains reviewable.
 Projects and uploaded files persist under `SJMS_DATA_DIR` (default `./data`). The
 current `VISION_PROVIDER=mock` creates contract-valid ProductUnderstanding data;
 Bob's vision worker will replace that adapter without changing the Web flow.
+Set `UNDERSTANDING_API_URL=http://127.0.0.1:8788` to call the worker's
+`POST /v1/understand` endpoint. Both containers must mount `SJMS_DATA_DIR` at the
+same absolute path because the single-server v0 contract passes resolved artifact
+paths, never raw uploads.
 
 ## Run with Docker
 

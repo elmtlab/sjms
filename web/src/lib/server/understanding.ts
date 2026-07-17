@@ -1,6 +1,6 @@
 import "server-only";
 
-import { ProjectDTO, saveUnderstanding } from "@/lib/server/project-store";
+import { getUnderstandingRequest, ProjectDTO, saveUnderstanding } from "@/lib/server/project-store";
 
 export type ProductUnderstanding = {
   schemaVersion: "0.1";
@@ -18,7 +18,6 @@ export type ProductUnderstanding = {
     evidence: Array<{ sourceId: string; artifactId: null; locator: string; excerpt: string }>;
   }>;
   features: Array<{ featureId: string; name: string; benefit: string; claimIds: string[] }>;
-  provider: "mock";
 };
 
 function mockUnderstanding(project: ProjectDTO): ProductUnderstanding {
@@ -41,14 +40,32 @@ function mockUnderstanding(project: ProjectDTO): ProductUnderstanding {
       { featureId: "feature_understand", name: "素材理解", benefit: "从产品素材中提炼核心价值与证据", claimIds: ["claim_value"] },
       { featureId: "feature_outputs", name: "多画幅输出", benefit: "同一个故事快速适配不同发布渠道", claimIds: ["claim_output"] },
     ],
-    provider: "mock",
   };
 }
 
 export async function analyzeProject(project: ProjectDTO) {
   if (project.sources.length === 0) throw new Error("At least one source is required");
-  const understanding = mockUnderstanding(project);
+  const serviceUrl = process.env.UNDERSTANDING_API_URL?.replace(/\/$/, "");
+  let understanding: ProductUnderstanding;
+  if (serviceUrl) {
+    const request = await getUnderstandingRequest(project.projectId);
+    const provider = process.env.VISION_PROVIDER ?? "mock";
+    const response = await fetch(`${serviceUrl}/v1/understand`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...request, provider }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(`Understanding service failed (${response.status}): ${detail.slice(0, 300)}`);
+    }
+    const payload = await response.json() as { understanding: ProductUnderstanding };
+    understanding = payload.understanding;
+  } else {
+    understanding = mockUnderstanding(project);
+  }
   await saveUnderstanding(project.projectId, understanding);
   return understanding;
 }
-
