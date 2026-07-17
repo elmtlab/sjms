@@ -48,7 +48,10 @@ class EdgeTTS:
         words = []
 
         async def run():
-            com = edge_tts.Communicate(text, voice, rate=rate)
+            # edge-tts >= 7 defaults to SentenceBoundary; word-level
+            # timestamps are part of the adapter contract (karaoke subtitles)
+            com = edge_tts.Communicate(text, voice, rate=rate,
+                                       boundary="WordBoundary")
             with open(mp3, "wb") as f:
                 async for chunk in com.stream():
                     if chunk["type"] == "audio":
