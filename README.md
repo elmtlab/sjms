@@ -9,7 +9,7 @@ by 神机AI。
 contracts/          # 版本化契约（Storyboard / ProductUnderstanding JSON Schema, OpenAPI）— owner: Cindy
 docs/               # PRD 与设计文档 — owner: Cindy
 services/media/     # TTS 适配层 + 渲染服务（storyboard → mp4）— owner: Bob
-web/                # script-first Web MVP（Next.js，规划中）— owner: Cindy
+web/                # script-first Web MVP（Next.js）— owner: Cindy
 ```
 
 ## 核心原则
@@ -30,6 +30,18 @@ curl -X POST localhost:8787/v1/renders -H 'Content-Type: application/json' \
 ```
 
 详见 `services/media/README.md`。
+
+## 快速开始（Web）
+
+```bash
+cd web
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+打开 http://localhost:3000。Web 通过服务端 `/api/media/*` 代理连接本地媒体
+服务；媒体服务未启动时自动使用演示进度，不阻塞产品流程评审。
 
 ## 部署形态（MVP）
 

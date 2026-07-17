@@ -4,7 +4,7 @@
   "title": "StoryboardV0",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "storyboardId", "projectId", "revision", "understandingRevision", "locale", "style", "scenes"],
+  "required": ["schemaVersion", "storyboardId", "projectId", "revision", "understandingRevision", "locale", "brand", "style", "scenes"],
   "properties": {
     "schemaVersion": {"const": "0.1"},
     "storyboardId": {"type": "string", "minLength": 1},
@@ -13,6 +13,17 @@
     "understandingRevision": {"type": "integer", "minimum": 1},
     "locale": {"type": "string", "default": "zh-CN"},
     "title": {"type": ["string", "null"]},
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "description": "Immutable brand snapshot used to reproduce a render.",
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 48},
+        "byline": {"type": ["string", "null"], "maxLength": 80},
+        "url": {"type": ["string", "null"], "maxLength": 200}
+      }
+    },
     "style": {
       "type": "object",
       "additionalProperties": false,
@@ -67,4 +78,3 @@
     "updatedAt": {"type": "string", "format": "date-time"}
   }
 }
-
