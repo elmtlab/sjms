@@ -3,6 +3,7 @@ __pycache__/
 jobs/
 tts-cache/
 preview/
+data/
 *.log
 .DS_Store
 node_modules/

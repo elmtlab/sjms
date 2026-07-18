@@ -249,6 +249,8 @@ Contract rules:
 - A render references `storyboardId + revision`; it never consumes an unversioned
   “latest” storyboard.
 - Render visuals reference artifact IDs, never original URLs or filesystem paths.
+- Each storyboard stores a `brand` snapshot (`name`, `byline`, `url`) so a render
+  remains reproducible if project-level brand settings later change.
 - `durationMs` may be null while drafting, but must be filled from TTS output before
   rendering.
 - Worker commands are idempotent using `project + revision + operation + options`.
@@ -306,4 +308,3 @@ Only these decisions block implementation after the v0 services exist:
 - Docker Compose production guidance: https://docs.docker.com/compose/how-tos/production/
 - Cloudflare Tunnel outbound connection model: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/
 - frp reverse proxy: https://github.com/fatedier/frp
-
